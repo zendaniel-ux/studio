@@ -5,7 +5,6 @@ import { AlertTriangle, CalendarDays, DollarSign, FileDown, Landmark, Percent, T
 
 import { calculateInvestmentGrowth, type SimulationResult } from '@/lib/financials';
 import { formatCurrency } from '@/lib/utils';
-import { calculateCostOfInaction } from '@/ai/flows/cost-of-inaction';
 import { useToast } from "@/hooks/use-toast"
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,15 +64,41 @@ const ControlSlider = ({
   </div>
 );
 
+// Lógica para calcular cuánto le cuesta al hijo el retraso del padre
+const calculateInactionCost = (monthly: number, totalYears: number, annualRate: number) => {
+  if (totalYears <= 3) {
+    return {
+      loss3Years: 0,
+      lossPerDay: 0,
+    };
+  }
+  
+  const r = annualRate / 100 / 12; // Tasa mensual
+  const nTotal = totalYears * 12;  // Meses totales
+
+  // Función de Valor Futuro
+  const FV = (p: number, rate: number, n: number) => p * ((Math.pow(1 + rate, n) - 1) / rate);
+
+  const totalNow = FV(monthly, r, nTotal);
+  
+  // Retraso de 3 años (36 meses)
+  const nDelayed3 = (totalYears - 3) * 12;
+  const totalDelayed3 = FV(monthly, r, nDelayed3);
+  
+  const loss3Years = totalNow - totalDelayed3;
+
+  return {
+    loss3Years: loss3Years,
+    lossPerDay: loss3Years / (3 * 365),
+  };
+};
+
+
 export default function SaiSimulator() {
-  const { toast } = useToast();
   const [monthlyInvestment, setMonthlyInvestment] = useState(100);
   const [investmentYears, setInvestmentYears] = useState(18);
   const [annualReturn, setAnnualReturn] = useState(9.4);
   const [inflation, setInflation] = useState(2.5);
-
-  const [costOfInaction, setCostOfInaction] = useState<number | null>(null);
-  const [isCalculatingCost, setIsCalculatingCost] = useState(true);
 
   const simulationData: SimulationResult = useMemo(() => {
     return calculateInvestmentGrowth({
@@ -83,33 +108,10 @@ export default function SaiSimulator() {
       inflation: inflation,
     });
   }, [monthlyInvestment, investmentYears, annualReturn, inflation]);
-
-  useEffect(() => {
-    const calculateCost = async () => {
-      setIsCalculatingCost(true);
-      try {
-        const result = await calculateCostOfInaction({
-          initialMonthly: monthlyInvestment,
-          years: investmentYears,
-          annualReturn: annualReturn / 100,
-          inflation: inflation / 100,
-          delayYears: 3,
-        });
-        setCostOfInaction(result.costOfInaction);
-      } catch (error) {
-        console.error("Error calculating cost of inaction:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not calculate the cost of inaction.",
-        });
-        setCostOfInaction(null);
-      } finally {
-        setIsCalculatingCost(false);
-      }
-    };
-    calculateCost();
-  }, [monthlyInvestment, investmentYears, annualReturn, inflation, toast]);
+  
+  const inactionCost = useMemo(() => {
+    return calculateInactionCost(monthlyInvestment, investmentYears, annualReturn);
+  }, [monthlyInvestment, investmentYears, annualReturn]);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -182,13 +184,10 @@ export default function SaiSimulator() {
         <main className="space-y-8 lg:col-span-2">
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle className="font-bold">Costo de la Inacción</AlertTitle>
+            <AlertTitle className="font-bold">El Costo de Esperar</AlertTitle>
             <AlertDescription>
-              {isCalculatingCost ? (
-                <Skeleton className="h-5 w-3/4" />
-              ) : (
-                `Si esperas 3 años para empezar, tu hijo perderá ${formatCurrency(costOfInaction ?? 0)} de su futuro.`
-              )}
+                <p>Si esperas 3 años para empezar, tu hijo podría perder <strong>{formatCurrency(inactionCost.loss3Years)}</strong> de su futuro.</p>
+                <p className="text-xs mt-1">Eso es <strong>{formatCurrency(inactionCost.lossPerDay)}</strong> perdidos por CADA DÍA de duda.</p>
             </AlertDescription>
           </Alert>
           
