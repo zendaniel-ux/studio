@@ -181,7 +181,7 @@ export default function SaiSimulator() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle className="font-bold">El Costo de Esperar</AlertTitle>
             <AlertDescription>
-                <p>Si esperas 3 años para empezar, tu hijo podría perder <strong>{formatCurrency(inactionCost.loss3Years)}</strong> de su futuro.</p>
+                <p>Si esperas 3 años para empezar con estos parámetros (Aporte inicial: {formatCurrency(initialInvestment)}, Capital Semilla Mensual: {formatCurrency(monthlyInvestment)}, Horizonte: {investmentYears} años, Tasa Anual: {annualReturn}%), tu hijo podría perder <strong>{formatCurrency(inactionCost.loss3Years)}</strong> de su futuro.</p>
                 <p className="text-xs mt-1">Eso es <strong>{formatCurrency(inactionCost.lossPerDay)}</strong> perdidos por CADA DÍA de duda.</p>
             </AlertDescription>
           </Alert>
