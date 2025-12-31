@@ -181,8 +181,8 @@ export default function SaiSimulator() {
           <h1 className="font-headline text-4xl font-black tracking-tight text-primary sm:text-5xl lg:text-6xl">
             Simulador del Legado SAI
           </h1>
-          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-            Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto.
+          <p className="mt-4 max-w-3xl text-lg text-muted-foreground">
+            Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos si sigues el protocolo de acción del Sistema de Acumulación Intergeneracional desarrollado por <a href="http://www.conocimientoutil.store" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.conocimientoutil.store</a>
           </p>
           <div className="mt-6">
             <Button onClick={handleExportPdf} disabled={isExporting}>
@@ -192,8 +192,57 @@ export default function SaiSimulator() {
           </div>
         </header>
 
-        <div className="flex flex-col-reverse gap-8 lg:grid lg:grid-cols-3">
-          <main className="space-y-8 lg:col-span-2">
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-3">
+           <aside className="space-y-8 lg:col-span-1 lg:order-2">
+            <Card className="shadow-2xl shadow-primary/5">
+              <CardHeader>
+                <CardTitle className="text-xl">Parámetros de Inversión (en USD)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <ControlSlider
+                  label="Aporte Inicial"
+                  icon={<DollarSign className="h-4 w-4" />}
+                  value={initialInvestment}
+                  onValueChange={setInitialInvestment}
+                  min={0}
+                  max={50000}
+                  step={500}
+                  unit=""
+                />
+                <ControlSlider
+                  label="Capital Semilla Mensual"
+                  icon={<DollarSign className="h-4 w-4" />}
+                  value={monthlyInvestment}
+                  onValueChange={setMonthlyInvestment}
+                  min={50}
+                  max={2000}
+                  step={50}
+                  unit=""
+                />
+                <ControlSlider
+                  label="Horizonte (tiempo de inversión)"
+                  icon={<CalendarDays className="h-4 w-4" />}
+                  value={investmentYears}
+                  onValueChange={setInvestmentYears}
+                  min={1}
+                  max={50}
+                  step={1}
+                  unit="años"
+                />
+                <ControlSlider
+                  label="Tasa Anual"
+                  icon={<Zap className="h-4 w-4" />}
+                  value={annualReturn}
+                  onValueChange={setAnnualReturn}
+                  min={0}
+                  max={20}
+                  step={0.1}
+                  unit="%"
+                />
+              </CardContent>
+            </Card>
+          </aside>
+          <main className="space-y-8 lg:col-span-2 lg:order-1">
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle className="font-bold">El Costo de Esperar</AlertTitle>
@@ -247,55 +296,6 @@ export default function SaiSimulator() {
               </CardContent>
             </Card>
           </main>
-          <aside className="space-y-8 lg:col-span-1">
-            <Card className="shadow-2xl shadow-primary/5">
-              <CardHeader>
-                <CardTitle className="text-xl">Parámetros de Inversión (en USD)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <ControlSlider
-                  label="Aporte Inicial"
-                  icon={<DollarSign className="h-4 w-4" />}
-                  value={initialInvestment}
-                  onValueChange={setInitialInvestment}
-                  min={0}
-                  max={50000}
-                  step={500}
-                  unit=""
-                />
-                <ControlSlider
-                  label="Capital Semilla Mensual"
-                  icon={<DollarSign className="h-4 w-4" />}
-                  value={monthlyInvestment}
-                  onValueChange={setMonthlyInvestment}
-                  min={50}
-                  max={2000}
-                  step={50}
-                  unit=""
-                />
-                <ControlSlider
-                  label="Horizonte (tiempo de inversión)"
-                  icon={<CalendarDays className="h-4 w-4" />}
-                  value={investmentYears}
-                  onValueChange={setInvestmentYears}
-                  min={1}
-                  max={50}
-                  step={1}
-                  unit="años"
-                />
-                <ControlSlider
-                  label="Tasa Anual"
-                  icon={<Zap className="h-4 w-4" />}
-                  value={annualReturn}
-                  onValueChange={setAnnualReturn}
-                  min={0}
-                  max={20}
-                  step={0.1}
-                  unit="%"
-                />
-              </CardContent>
-            </Card>
-          </aside>
         </div>
       </div>
     </>
