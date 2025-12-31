@@ -88,10 +88,21 @@ export default {
             height: '0',
           },
         },
+        'pulse-warning': {
+            '0%, 100%': { 
+              backgroundColor: 'hsl(var(--destructive) / 0.1)',
+              borderColor: 'hsl(var(--destructive) / 0.5)' 
+            },
+            '50%': { 
+              backgroundColor: 'hsl(var(--destructive) / 0.2)',
+              borderColor: 'hsl(var(--destructive) / 0.7)'
+            },
+          }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'pulse-warning': 'pulse-warning 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
