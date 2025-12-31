@@ -115,7 +115,7 @@ export default function SaiSimulator() {
           Simulador del Legado SAI
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto. Todos los cálculos son en dólares (USD).
+          Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto.
         </p>
         <div className="mt-6">
           <Button variant="outline" disabled>
@@ -140,7 +140,7 @@ export default function SaiSimulator() {
                 min={0}
                 max={50000}
                 step={500}
-                unit="$"
+                unit="(USD)"
               />
               <ControlSlider
                 label="Capital Semilla Mensual"
@@ -150,7 +150,7 @@ export default function SaiSimulator() {
                 min={50}
                 max={2000}
                 step={50}
-                unit="$"
+                unit="(USD)"
               />
               <ControlSlider
                 label="Horizonte (tiempo de inversión)"
@@ -214,7 +214,7 @@ export default function SaiSimulator() {
               icon={<Repeat />}
             />
             <KpiCard
-              title="Años para el Millón"
+              title="Años para el Millón de Dólares"
               value={simulationData.yearsToMillion ? `${simulationData.yearsToMillion} años` : 'Nunca'}
               description="Bajo estas condiciones"
               icon={<Rocket />}
