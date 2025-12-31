@@ -129,7 +129,7 @@ export default function SaiSimulator() {
         <aside className="space-y-8 lg:col-span-1">
           <Card className="shadow-2xl shadow-primary/5">
             <CardHeader>
-              <CardTitle className="text-xl">Parámetros de Inversión</CardTitle>
+              <CardTitle className="text-xl">Parámetros de Inversión (en USD)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
               <ControlSlider
@@ -140,7 +140,7 @@ export default function SaiSimulator() {
                 min={0}
                 max={50000}
                 step={500}
-                unit="(USD)"
+                unit=""
               />
               <ControlSlider
                 label="Capital Semilla Mensual"
@@ -150,7 +150,7 @@ export default function SaiSimulator() {
                 min={50}
                 max={2000}
                 step={50}
-                unit="(USD)"
+                unit=""
               />
               <ControlSlider
                 label="Horizonte (tiempo de inversión)"
