@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, type ReactNode, useRef } from 'react';
 import { AlertTriangle, CalendarDays, DollarSign, FileDown, Landmark, TrendingUp, Zap, PiggyBank, Repeat, Rocket } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 import { calculateInvestmentGrowth, type SimulationResult } from '@/lib/financials';
 import { formatCurrency } from '@/lib/utils';
@@ -13,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import KpiCard from '@/components/kpi-card';
 import InvestmentChart from '@/components/investment-chart';
+import PdfReport from './pdf-report';
 
 const ControlSlider = ({
   label,
@@ -94,6 +97,8 @@ export default function SaiSimulator() {
   const [monthlyInvestment, setMonthlyInvestment] = useState(100);
   const [investmentYears, setInvestmentYears] = useState(18);
   const [annualReturn, setAnnualReturn] = useState(9.4);
+  const [isExporting, setIsExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
 
   const simulationData: SimulationResult = useMemo(() => {
     return calculateInvestmentGrowth({
@@ -108,129 +113,192 @@ export default function SaiSimulator() {
     return calculateInactionCost(monthlyInvestment, initialInvestment, investmentYears, annualReturn);
   }, [monthlyInvestment, initialInvestment, investmentYears, annualReturn]);
 
+  const handleExportPdf = async () => {
+    setIsExporting(true);
+    const input = reportRef.current;
+    if (!input) {
+      setIsExporting(false);
+      return;
+    }
+
+    // A4 dimensions in pixels at 96 DPI: 794x1123. We scale for better quality.
+    const scale = 2; 
+    const canvas = await html2canvas(input, {
+      scale: scale,
+      useCORS: true,
+      width: input.offsetWidth,
+      height: input.offsetHeight,
+      windowWidth: document.documentElement.offsetWidth,
+      windowHeight: document.documentElement.offsetHeight,
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    
+    // A4 dimensions in mm: 210x297
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const ratio = canvasWidth / canvasHeight;
+
+    let imgWidth = pdfWidth;
+    let imgHeight = imgWidth / ratio;
+    
+    if (imgHeight > pdfHeight) {
+      imgHeight = pdfHeight;
+      imgWidth = imgHeight * ratio;
+    }
+    
+    const x = (pdfWidth - imgWidth) / 2;
+    const y = (pdfHeight - imgHeight) / 2;
+
+    pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+    pdf.save('reporte-legado-sai.pdf');
+    setIsExporting(false);
+  };
+
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <header className="mb-8 flex flex-col items-center text-center">
-        <h1 className="font-headline text-4xl font-black tracking-tight text-primary sm:text-5xl lg:text-6xl">
-          Simulador del Legado SAI
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto.
-        </p>
-        <div className="mt-6">
-          <Button variant="outline" disabled>
-            <FileDown className="mr-2 h-4 w-4" />
-            Exportar a PDF
-          </Button>
+    <>
+      <div style={{ position: 'fixed', left: '-2000px', top: 0, zIndex: -1 }}>
+        <div ref={reportRef} style={{ width: '794px', height: '1123px' }}>
+            <PdfReport
+                initialInvestment={initialInvestment}
+                monthlyInvestment={monthlyInvestment}
+                investmentYears={investmentYears}
+                annualReturn={annualReturn}
+                simulationData={simulationData}
+            />
         </div>
-      </header>
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <aside className="space-y-8 lg:col-span-1">
-          <Card className="shadow-2xl shadow-primary/5">
-            <CardHeader>
-              <CardTitle className="text-xl">Parámetros de Inversión (en USD)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <ControlSlider
-                label="Aporte Inicial"
-                icon={<DollarSign className="h-4 w-4" />}
-                value={initialInvestment}
-                onValueChange={setInitialInvestment}
-                min={0}
-                max={50000}
-                step={500}
-                unit=""
-              />
-              <ControlSlider
-                label="Capital Semilla Mensual"
-                icon={<DollarSign className="h-4 w-4" />}
-                value={monthlyInvestment}
-                onValueChange={setMonthlyInvestment}
-                min={50}
-                max={2000}
-                step={50}
-                unit=""
-              />
-              <ControlSlider
-                label="Horizonte (tiempo de inversión)"
-                icon={<CalendarDays className="h-4 w-4" />}
-                value={investmentYears}
-                onValueChange={setInvestmentYears}
-                min={1}
-                max={50}
-                step={1}
-                unit="años"
-              />
-              <ControlSlider
-                label="Tasa Anual"
-                icon={<Zap className="h-4 w-4" />}
-                value={annualReturn}
-                onValueChange={setAnnualReturn}
-                min={0}
-                max={20}
-                step={0.1}
-                unit="%"
-              />
-            </CardContent>
-          </Card>
-        </aside>
-
-        <main className="space-y-8 lg:col-span-2">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle className="font-bold">El Costo de Esperar</AlertTitle>
-            <AlertDescription>
-                <p>Si esperas 3 años para empezar con estos parámetros (Aporte inicial: {formatCurrency(initialInvestment)}, Capital Semilla Mensual: {formatCurrency(monthlyInvestment)}, Horizonte: {investmentYears} años, Tasa Anual: {annualReturn}%), tu hijo podría perder <strong>{formatCurrency(inactionCost.loss3Years)}</strong> de su futuro.</p>
-                <p className="text-xs mt-1">Eso es <strong>{formatCurrency(inactionCost.lossPerDay)}</strong> perdidos por CADA DÍA de duda.</p>
-            </AlertDescription>
-          </Alert>
-          
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <KpiCard
-              title="Patrimonio Total"
-              value={formatCurrency(simulationData.finalNominalValue)}
-              description={`al final de ${investmentYears} años`}
-              icon={<Landmark />}
-            />
-            <KpiCard
-              title="Intereses Ganados"
-              value={formatCurrency(simulationData.totalInterest)}
-              description="Magia del interés compuesto"
-              icon={<TrendingUp />}
-            />
-            <KpiCard
-              title="Dinero Invertido"
-              value={formatCurrency(simulationData.totalContribution)}
-              description="Aporte inicial + mensual"
-              icon={<PiggyBank />}
-            />
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <KpiCard
-              title="Duplicación del Capital"
-              value={simulationData.yearsToDouble ? `${simulationData.yearsToDouble} años` : 'N/A'}
-              description="Años para duplicar inversión"
-              icon={<Repeat />}
-            />
-            <KpiCard
-              title="Años para el Millón de Dólares"
-              value={simulationData.yearsToMillion ? `${simulationData.yearsToMillion} años` : 'Nunca'}
-              description="Bajo estas condiciones"
-              icon={<Rocket />}
-            />
-          </div>
-
-          <Card className="shadow-2xl shadow-primary/5">
-            <CardHeader>
-              <CardTitle className="text-xl">Proyección de Crecimiento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InvestmentChart data={simulationData.chartData} />
-            </CardContent>
-          </Card>
-        </main>
       </div>
-    </div>
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header className="mb-8 flex flex-col items-center text-center">
+          <h1 className="font-headline text-4xl font-black tracking-tight text-primary sm:text-5xl lg:text-6xl">
+            Simulador del Legado SAI
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+            Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto.
+          </p>
+          <div className="mt-6">
+            <Button onClick={handleExportPdf} disabled={isExporting}>
+              <FileDown className="mr-2 h-4 w-4" />
+              {isExporting ? 'Exportando...' : 'Exportar a PDF'}
+            </Button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <aside className="space-y-8 lg:col-span-1">
+            <Card className="shadow-2xl shadow-primary/5">
+              <CardHeader>
+                <CardTitle className="text-xl">Parámetros de Inversión (en USD)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <ControlSlider
+                  label="Aporte Inicial"
+                  icon={<DollarSign className="h-4 w-4" />}
+                  value={initialInvestment}
+                  onValueChange={setInitialInvestment}
+                  min={0}
+                  max={50000}
+                  step={500}
+                  unit=""
+                />
+                <ControlSlider
+                  label="Capital Semilla Mensual"
+                  icon={<DollarSign className="h-4 w-4" />}
+                  value={monthlyInvestment}
+                  onValueChange={setMonthlyInvestment}
+                  min={50}
+                  max={2000}
+                  step={50}
+                  unit=""
+                />
+                <ControlSlider
+                  label="Horizonte (tiempo de inversión)"
+                  icon={<CalendarDays className="h-4 w-4" />}
+                  value={investmentYears}
+                  onValueChange={setInvestmentYears}
+                  min={1}
+                  max={50}
+                  step={1}
+                  unit="años"
+                />
+                <ControlSlider
+                  label="Tasa Anual"
+                  icon={<Zap className="h-4 w-4" />}
+                  value={annualReturn}
+                  onValueChange={setAnnualReturn}
+                  min={0}
+                  max={20}
+                  step={0.1}
+                  unit="%"
+                />
+              </CardContent>
+            </Card>
+          </aside>
+
+          <main className="space-y-8 lg:col-span-2">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle className="font-bold">El Costo de Esperar</AlertTitle>
+              <AlertDescription>
+                  <p>Si esperas 3 años para empezar con estos parámetros (Aporte inicial: {formatCurrency(initialInvestment)}, Capital Semilla Mensual: {formatCurrency(monthlyInvestment)}, Horizonte: {investmentYears} años, Tasa Anual: {annualReturn}%), tu hijo podría perder <strong>{formatCurrency(inactionCost.loss3Years)}</strong> de su futuro.</p>
+                  <p className="text-xs mt-1">Eso es <strong>{formatCurrency(inactionCost.lossPerDay)}</strong> perdidos por CADA DÍA de duda.</p>
+              </AlertDescription>
+            </Alert>
+            
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <KpiCard
+                title="Patrimonio Total"
+                value={formatCurrency(simulationData.finalNominalValue)}
+                description={`al final de ${investmentYears} años`}
+                icon={<Landmark />}
+              />
+              <KpiCard
+                title="Intereses Ganados"
+                value={formatCurrency(simulationData.totalInterest)}
+                description="Magia del interés compuesto"
+                icon={<TrendingUp />}
+              />
+              <KpiCard
+                title="Dinero Invertido"
+                value={formatCurrency(simulationData.totalContribution)}
+                description="Aporte inicial + mensual"
+                icon={<PiggyBank />}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <KpiCard
+                title="Duplicación del Capital"
+                value={simulationData.yearsToDouble ? `${simulationData.yearsToDouble} años` : 'N/A'}
+                description="Años para duplicar inversión"
+                icon={<Repeat />}
+              />
+              <KpiCard
+                title="Años para el Millón de Dólares"
+                value={simulationData.yearsToMillion ? `${simulationData.yearsToMillion} años` : 'Nunca'}
+                description="Bajo estas condiciones"
+                icon={<Rocket />}
+              />
+            </div>
+
+            <Card className="shadow-2xl shadow-primary/5">
+              <CardHeader>
+                <CardTitle className="text-xl">Proyección de Crecimiento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <InvestmentChart data={simulationData.chartData} />
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </div>
+    </>
   );
 }
