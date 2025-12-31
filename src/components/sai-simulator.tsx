@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, type ReactNode } from 'react';
-import { AlertTriangle, CalendarDays, DollarSign, FileDown, Landmark, Target, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, CalendarDays, DollarSign, FileDown, Landmark, TrendingUp, Zap, PiggyBank, Repeat, Rocket } from 'lucide-react';
 
 import { calculateInvestmentGrowth, type SimulationResult } from '@/lib/financials';
 import { formatCurrency } from '@/lib/utils';
@@ -164,7 +164,7 @@ export default function SaiSimulator() {
               />
               <ControlSlider
                 label="Tasa Anual"
-                icon={<Target className="h-4 w-4" />}
+                icon={<Zap className="h-4 w-4" />}
                 value={annualReturn}
                 onValueChange={setAnnualReturn}
                 min={0}
@@ -194,16 +194,30 @@ export default function SaiSimulator() {
               icon={<Landmark />}
             />
             <KpiCard
-              title="Dinero Regalado"
+              title="Intereses Ganados"
               value={formatCurrency(simulationData.totalInterest)}
-              description="Total intereses ganados"
+              description="Magia del interés compuesto"
               icon={<TrendingUp />}
             />
             <KpiCard
-              title="Independencia"
-              value={simulationData.inflexionYear ? `Año ${simulationData.inflexionYear}` : 'N/A'}
-              description="Punto de inflexión"
-              icon={<Zap />}
+              title="Dinero Invertido"
+              value={formatCurrency(simulationData.totalContribution)}
+              description="Aporte inicial + mensual"
+              icon={<PiggyBank />}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <KpiCard
+              title="Duplicación del Capital"
+              value={simulationData.yearsToDouble ? `${simulationData.yearsToDouble} años` : 'N/A'}
+              description="Años para duplicar inversión"
+              icon={<Repeat />}
+            />
+            <KpiCard
+              title="Años para el Millón"
+              value={simulationData.yearsToMillion ? `${simulationData.yearsToMillion} años` : 'Nunca'}
+              description="Bajo estas condiciones"
+              icon={<Rocket />}
             />
           </div>
 

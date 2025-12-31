@@ -11,6 +11,8 @@ export interface SimulationResult {
   totalContribution: number;
   totalInterest: number;
   inflexionYear: number | null;
+  yearsToDouble: number | null;
+  yearsToMillion: number | null;
 }
 
 export function calculateInvestmentGrowth({
@@ -26,6 +28,7 @@ export function calculateInvestmentGrowth({
 }): SimulationResult {
   const chartData: ChartData[] = [];
   let inflexionYear: number | null = null;
+  let yearsToDouble: number | null = null;
   const monthlyReturnRate = annualReturn / 100 / 12;
 
   let currentValue = initialInvestment;
@@ -63,6 +66,10 @@ export function calculateInvestmentGrowth({
                   inflexionYear = year;
               }
           }
+
+          if (yearsToDouble === null && currentValue >= totalContribution * 2) {
+            yearsToDouble = year;
+          }
           
           chartData.push({
               year: year,
@@ -73,6 +80,34 @@ export function calculateInvestmentGrowth({
       }
   }
   
+  let yearsToMillion: number | null = null;
+  if (currentValue < 1000000 && annualReturn > 0) {
+    let futureValue = currentValue;
+    let additionalYears = 0;
+    while (futureValue < 1000000) {
+      for (let month = 1; month <= 12; month++) {
+        futureValue = (futureValue + initialMonthly) * (1 + monthlyReturnRate);
+      }
+      additionalYears++;
+      if (additionalYears > 100) { // Safety break
+        additionalYears = null;
+        break;
+      }
+    }
+    if (additionalYears) {
+      yearsToMillion = years + additionalYears;
+    }
+  } else if (currentValue >= 1000000) {
+    yearsToMillion = years;
+     for (let i = 0; i < chartData.length; i++) {
+      if (chartData[i].nominalValue >= 1000000) {
+        yearsToMillion = chartData[i].year;
+        break;
+      }
+    }
+  }
+
+
   const finalDataPoint = chartData[chartData.length - 1] || { nominalValue: initialInvestment, totalContribution: initialInvestment, interestEarned: 0 };
   
   return {
@@ -81,5 +116,7 @@ export function calculateInvestmentGrowth({
     totalContribution: finalDataPoint.totalContribution,
     totalInterest: finalDataPoint.interestEarned,
     inflexionYear,
+    yearsToDouble,
+    yearsToMillion,
   };
 }
