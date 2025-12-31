@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useMemo, useEffect, type ReactNode } from 'react';
-import { AlertTriangle, CalendarDays, DollarSign, FileDown, Landmark, Percent, Target, TrendingUp, Zap } from 'lucide-react';
+import { useState, useMemo, type ReactNode } from 'react';
+import { AlertTriangle, CalendarDays, DollarSign, FileDown, Landmark, Target, TrendingUp, Zap } from 'lucide-react';
 
 import { calculateInvestmentGrowth, type SimulationResult } from '@/lib/financials';
 import { formatCurrency } from '@/lib/utils';
-import { useToast } from "@/hooks/use-toast"
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import KpiCard from '@/components/kpi-card';
 import InvestmentChart from '@/components/investment-chart';
 
@@ -65,25 +63,23 @@ const ControlSlider = ({
 );
 
 // Lógica para calcular cuánto le cuesta al hijo el retraso del padre
-const calculateInactionCost = (monthly: number, totalYears: number, annualRate: number) => {
+const calculateInactionCost = (monthly: number, initial: number, totalYears: number, annualRate: number) => {
   if (totalYears <= 3) {
-    return {
-      loss3Years: 0,
-      lossPerDay: 0,
-    };
+    return { loss3Years: 0, lossPerDay: 0 };
   }
-  
   const r = annualRate / 100 / 12; // Tasa mensual
-  const nTotal = totalYears * 12;  // Meses totales
-
-  // Función de Valor Futuro
-  const FV = (p: number, rate: number, n: number) => p * ((Math.pow(1 + rate, n) - 1) / rate);
-
-  const totalNow = FV(monthly, r, nTotal);
   
-  // Retraso de 3 años (36 meses)
+  // Función de Valor Futuro de una anualidad
+  const FV_annuity = (p: number, rate: number, n: number) => p * ((Math.pow(1 + rate, n) - 1) / rate);
+  // Función de Valor Futuro de un monto único
+  const FV_lumpsum = (pv: number, rate: number, n: number) => pv * Math.pow(1 + rate, n);
+
+  const nTotal = totalYears * 12;
+  const totalNow = FV_lumpsum(initial, r, nTotal) + FV_annuity(monthly, r, nTotal);
+  
   const nDelayed3 = (totalYears - 3) * 12;
-  const totalDelayed3 = FV(monthly, r, nDelayed3);
+  // Si se retrasa 3 años, el aporte inicial también empieza a capitalizar 3 años después
+  const totalDelayed3 = FV_lumpsum(initial, r, nDelayed3) + FV_annuity(monthly, r, nDelayed3);
   
   const loss3Years = totalNow - totalDelayed3;
 
@@ -93,25 +89,24 @@ const calculateInactionCost = (monthly: number, totalYears: number, annualRate: 
   };
 };
 
-
 export default function SaiSimulator() {
+  const [initialInvestment, setInitialInvestment] = useState(1000);
   const [monthlyInvestment, setMonthlyInvestment] = useState(100);
   const [investmentYears, setInvestmentYears] = useState(18);
   const [annualReturn, setAnnualReturn] = useState(9.4);
-  const [inflation, setInflation] = useState(2.5);
 
   const simulationData: SimulationResult = useMemo(() => {
     return calculateInvestmentGrowth({
+      initialInvestment: initialInvestment,
       initialMonthly: monthlyInvestment,
       years: investmentYears,
       annualReturn: annualReturn,
-      inflation: inflation,
     });
-  }, [monthlyInvestment, investmentYears, annualReturn, inflation]);
+  }, [initialInvestment, monthlyInvestment, investmentYears, annualReturn]);
   
   const inactionCost = useMemo(() => {
-    return calculateInactionCost(monthlyInvestment, investmentYears, annualReturn);
-  }, [monthlyInvestment, investmentYears, annualReturn]);
+    return calculateInactionCost(monthlyInvestment, initialInvestment, investmentYears, annualReturn);
+  }, [monthlyInvestment, initialInvestment, investmentYears, annualReturn]);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -138,7 +133,17 @@ export default function SaiSimulator() {
             </CardHeader>
             <CardContent className="space-y-8">
               <ControlSlider
-                label="Semilla Mensual"
+                label="Aporte Inicial"
+                icon={<DollarSign className="h-4 w-4" />}
+                value={initialInvestment}
+                onValueChange={setInitialInvestment}
+                min={0}
+                max={50000}
+                step={500}
+                unit="$"
+              />
+              <ControlSlider
+                label="Capital Semilla Mensual"
                 icon={<DollarSign className="h-4 w-4" />}
                 value={monthlyInvestment}
                 onValueChange={setMonthlyInvestment}
@@ -148,7 +153,7 @@ export default function SaiSimulator() {
                 unit="$"
               />
               <ControlSlider
-                label="Horizonte"
+                label="Horizonte (tiempo de inversión)"
                 icon={<CalendarDays className="h-4 w-4" />}
                 value={investmentYears}
                 onValueChange={setInvestmentYears}
@@ -158,22 +163,12 @@ export default function SaiSimulator() {
                 unit="años"
               />
               <ControlSlider
-                label="Tasa Neta"
+                label="Tasa Anual"
                 icon={<Target className="h-4 w-4" />}
                 value={annualReturn}
                 onValueChange={setAnnualReturn}
                 min={0}
                 max={20}
-                step={0.1}
-                unit="%"
-              />
-              <ControlSlider
-                label="Inflación"
-                icon={<TrendingUp className="h-4 w-4" />}
-                value={inflation}
-                onValueChange={setInflation}
-                min={0}
-                max={10}
                 step={0.1}
                 unit="%"
               />

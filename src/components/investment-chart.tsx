@@ -14,8 +14,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <Card className="p-4 border-primary/20">
         <p className="font-bold">{`Año ${label}`}</p>
-        <p className="text-primary">{`Patrimonio Nominal: ${formatCurrency(payload[0].value)}`}</p>
-        <p className="text-accent">{`Patrimonio Real: ${formatCurrency(payload[1].value)}`}</p>
+        <p className="text-primary">{`Patrimonio: ${formatCurrency(payload[0].value)}`}</p>
         <p className="text-muted-foreground">{`Total Aportado: ${formatCurrency(payload[0].payload.totalContribution)}`}</p>
       </Card>
     );
@@ -47,33 +46,21 @@ export default function InvestmentChart({ data }: InvestmentChartProps) {
             tickFormatter={(tick) => formatCurrency(tick as number)}
             width={100}
           />
+
           <Tooltip content={<CustomTooltip />} />
           <defs>
             <linearGradient id="colorNominal" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
               <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
             </linearGradient>
-            <linearGradient id="colorReal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-            </linearGradient>
           </defs>
           <Area 
             type="monotone" 
             dataKey="nominalValue" 
-            name="Patrimonio Nominal" 
+            name="Patrimonio" 
             stroke="hsl(var(--primary))" 
             strokeWidth={2}
             fill="url(#colorNominal)"
-            animationDuration={1500}
-          />
-          <Area 
-            type="monotone" 
-            dataKey="realValue" 
-            name="Patrimonio Real (Ajustado)"
-            stroke="hsl(var(--accent))" 
-            strokeWidth={2}
-            fill="url(#colorReal)"
             animationDuration={1500}
           />
         </AreaChart>
