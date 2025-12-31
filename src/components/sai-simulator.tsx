@@ -115,7 +115,7 @@ export default function SaiSimulator() {
           Simulador del Legado SAI
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto.
+          Una herramienta de cálculo financiero para visualizar el futuro patrimonio de tus hijos y el poder del interés compuesto. Todos los cálculos son en dólares (USD).
         </p>
         <div className="mt-6">
           <Button variant="outline" disabled>
