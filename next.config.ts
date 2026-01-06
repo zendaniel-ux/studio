@@ -1,36 +1,20 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export', // <--- AÑADE ESTA LÍNEA
+  // Esto le dice a Firebase que prepare el sitio para un servidor
+  output: 'standalone', 
+
   images: {
-    unoptimized: true, // <--- Y ESTA TAMBIÉN (necesaria para exportar)
+    // Aquí corregimos el error que te marcaba el log
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**', // Esto permite imágenes de cualquier sitio seguro
+      },
+    ],
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  remotePatterns: [
-    {
-      protocol: 'https',
-      hostname: 'placehold.co',
-      port: '',
-      pathname: '/**',
-    },
-    {
-      protocol: 'https',
-      hostname: 'images.unsplash.com',
-      port: '',
-      pathname: '/**',
-    },
-    {
-      protocol: 'https',
-      hostname: 'picsum.photos',
-      port: '',
-      pathname: '/**',
-    },
-  ],
+  // Mantenemos las reglas básicas de Next.js
+  reactStrictMode: true,
 };
 
 export default nextConfig;
