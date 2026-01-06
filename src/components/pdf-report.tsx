@@ -44,7 +44,7 @@ const PdfReport = ({
             <Card className="bg-card">
                 <CardContent className="p-6 grid grid-cols-2 gap-4 text-lg">
                     <div><strong>Aporte Inicial (USD):</strong> {formatCurrency(initialInvestment)}</div>
-                    <div><strong>Capital Semilla Mensual (USD):</strong> {formatCurrency(monthlyInvestment)}</div>
+                    <div><strong>Aporte Mensual (Semilla) (USD):</strong> {formatCurrency(monthlyInvestment)}</div>
                     <div><strong>Horizonte de Inversión:</strong> {investmentYears} años</div>
                     <div><strong>Tasa Anual Esperada:</strong> {annualReturn}%</div>
                 </CardContent>
